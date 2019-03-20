@@ -3,61 +3,52 @@
 s.freeAll;
 ~tempo = TempoClock(1);
 ~buffers = ();
-8.do {|i| ~buffers.put(i, Buffer.alloc(s, 4.0 * s.sampleRate)); };
+~buflength = 16.0; // seconds
+8.do {|i| ~buffers.put(i, Buffer.alloc(s, ~buflength * s.sampleRate)); };
 )
 (
 ~loops = ();
-~tempo.schedAbs(~tempo.beats.ceil, {
-	~sync = Synth(\clock, [tempo:4]);
-	~buffers.size.do { |i|
-		// ~loops.put( i, Synth(\loop, [in:2, bufnum: ~buffers[i]])	);
-		~loops.put( i, Synth(\bufrd, [in:2, bufnum: ~buffers[i]])	);
-	};
-});
+~loopdur = 4;
+~clock = Synth(\clock, [tempo:~buflength * (~loopdur / ~buflength)]);
+~buffers.size.do { |i|
+	// ~loops.put( i, Synth(\loop, [in:2, bufnum: ~buffers[i]])	);
+	var bufnum = ~buffers[i];
+	~loops.put( i, Synth(\bufrd, [in:2, bufnum: bufnum, dur: ~loopdur]));
+	[i, bufnum].postln;
+};
+
+~set = {|loopnum, param, value| ~loops[loopnum].set(param.asSymbol, value); ["loop: "++loopnum, param++": "++value].postln};
+~sync = {|loopnum| ~tempo.playNextBar(~loops[loopnum].set(\t_reset, 1)); ["sync: "++loopnum].postln;};
+~clearBuffer = {|loopnum| ~buffers[loopnum].zero; ["clearbuffer: "++loopnum].postln};
+~reset = {|loopnum|
+	~tempo.schedAbs( ~tempo.beats.ceil, {
+		["reset: "++loopnum].postln;
+
+		~loops[loopnum].set(\t_reset, 1);
+		~loops[loopnum].set(\amp, 1);
+		~loops[loopnum].set(\out, 0);
+		~loops[loopnum].set(\pan, 0);
+		~loops[loopnum].set(\feedback, 1);
+		~loops[loopnum].set(\prelevel, 0.5);
+		~loops[loopnum].set(\rate, 1);
+		~loops[loopnum].set(\dur, ~loopdur);
+		~loops[loopnum].set(\start, 0);
+		~loops[loopnum].set(\rec, 0);
+		// ~loops[loopnum].set(\loop, 0);
+		// ~clearBuffer.value(loopnum);
+	});
+};
+
 i = Synth(\mic, [out:2]);
 "looper-nanoktl.scd".loadRelative;
 )
 
 
-/*
-MIDIIn.connectAll;
-MIDIIn.disconnectAll
-MIDIFunc.cc({arg ...args; args.postln});*/
-b.zero
-(
-s.freeAll;
-b = Buffer.alloc(s, 4 * s.sampleRate)!2;
-t = TempoClock(1);
-)
-(
-t.schedAbs(t.beats.ceil, {
-	a = Synth(\bufrd, [in:2, bufnum:b[0], rec:1, feedback:0.95]);
-	e = Synth(\bufrd, [in:2, bufnum:b[1], rec:1, feedback:0.95]);
-	c = Synth(\clock);
-});
-)
-c.set(\rate, 0.5);
-c.set(\rate, 1);
-c.set(\rate, 2);
-t.schedAbs(t.nextBar, {a.set(\t_reset, 1);});
-t.schedAbs(t.nextBar, {e.set(\t_reset, 1);});
-e.set(\t_reset, 1);
-a.set(\rec, 0);
-e.set(\rec, 0);
-a.set(\rec, 1);
-a.set(\rate, -1);
-a.set(\loop, 0)
-a.set(\feedback, 1);
-a.set(\feedback, 0.5);
-a.set(\feedback, 0);
-a.set(\rate, 0.5);
-a.set(\rate, 1);
-a.set(\rate, 4);
-a.set(\sync, 0);
-a.set(\sync, 1);
-c.set(\sync, 1);
-a.set(\dur, 8);
-a.free; b.zero;
-s.meter
 
+~set.value(1, \loop, 1)
+~set.value(1, \loop, 0)
+~set.value(1, \dur, 2)
+~set.value(4, \loop, 1)
+~clock.set(\tempo, 4)
+~clock.free
 

@@ -42,14 +42,14 @@ s.waitForBoot {
 		var start = \start.kr(0);
 		var dur = \dur.kr(1);
 		var phase = \phase.kr(0);
-		var loop = \loop.kr(1);
+		var loop = \loop.kr(0);
 
 		var in = In.ar(\in.ar(2));
 		var rec = \rec.kr(0);
-		var reclevel = \reclevel.kr(1);
+		var reclevel = \reclevel.kr(0.5);
 		var feedback = \feedback.kr(1);
 
-		var sig, pos, end, resetpos, synctrig;
+		var sig, sigrec, pos, end, resetpos, synctrig;
 		synctrig = In.kr(syncbus);
 		// dur = BufDur.kr(buf) * dur;
 		rate = BufRateScale.kr(bufnum) * rate;
@@ -59,16 +59,18 @@ s.waitForBoot {
 		// phase = BufFrames.kr(buf) * phase;
 		pos = Phasor.ar(
 			// trig: Impulse.kr(1/dur, phase) + t_reset + Select.kr(sync, [0, synctrig]),
-			trig: PulseDivider.kr(synctrig, dur),
+			trig: synctrig+ t_reset,
+			// trig: PulseDivider.kr(synctrig, dur) + t_reset,
 			rate: rate,
 			start: resetpos,
 			end: end,
 			resetPos:resetpos
 		);
 		sig = BufRd.ar(1, bufnum, pos, loop);
-		sig = sig * amp;
 
 		BufWr.ar((in * rec * reclevel) + (sig * feedback), bufnum, pos, loop);
+
+		sig = sig * amp;
 
 		Out.ar(out, Pan2.ar(sig, pan));
 	}).add;
@@ -85,4 +87,12 @@ s.waitForBoot {
 		Out.kr(out, Impulse.kr(1/tempo));
 	}).add;
 
+	SynthDef(\metronome, {
+		var clock = In.kr(\clockbus.kr(2));
+		var out = \out.kr(0);
+		var amp = \amp.kr(1);
+		var beatsPerBar = \beatsPerBar.kr(4);
+		var sig = Decay.kr([clock, PulseDivider.kr(clock, beatsPerBar)], 0.1) * SinOsc.ar([660, 880], 0, 0.1);
+		Out.ar(out, sig.sum);
+	}).add;
 };
