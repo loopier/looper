@@ -67,11 +67,15 @@ s.freeAll;
 
 
 ~setTempo = { |tempo|
+	var scale = tempo / ~tempo;
+	scale.postln;
 	~tempo = tempo;
 	~loops.do { |loop|
 		loop.set(\clock, ~tempo);
-		// rescale dur
+		// rescale parameters
 		loop.get(\dur, { |dur| loop.set(\dur, dur) });
+		// remove rate scaling if you only want to change speed without changing pitch
+		loop.get(\rate, { |rate| loop.set(\rate, rate * scale) });
 	}
 };
 
