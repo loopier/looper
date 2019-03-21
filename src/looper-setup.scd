@@ -46,7 +46,7 @@ s.waitForBoot {
 
 		var in = In.ar(\in.ar(2));
 		var rec = \rec.kr(0);
-		var reclevel = \reclevel.kr(0.5);
+		var reclevel = \reclevel.kr(1);
 		var feedback = \feedback.kr(1);
 
 		var sig, sigrec, pos, end, resetpos, synctrig;
@@ -55,7 +55,7 @@ s.waitForBoot {
 		rate = BufRateScale.kr(bufnum) * rate;
 		resetpos = BufFrames.kr(bufnum) * start;
 		// dur = BufDur.kr(bufnum) * dur;
-		end = BufFrames.kr(bufnum) * (start + dur);
+		end = BufFrames.kr(bufnum) * min((start + dur), 1);
 		// phase = BufFrames.kr(buf) * phase;
 		pos = Phasor.ar(
 			// trig: Impulse.kr(1/dur, phase) + t_reset + Select.kr(sync, [0, synctrig]),
@@ -68,7 +68,7 @@ s.waitForBoot {
 		);
 		sig = BufRd.ar(1, bufnum, pos, loop);
 
-		BufWr.ar((in * rec * reclevel) + (sig * feedback), bufnum, pos, loop);
+		BufWr.ar((in * rec * (reclevel/2)) + (sig * feedback), bufnum, pos, loop);
 
 		sig = sig * amp;
 
