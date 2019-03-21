@@ -9,12 +9,12 @@ s.freeAll;
 (
 ~loops = ();
 ~loops.collect(_.free);
-~masterdur = ~tempo;
-~clock = Synth(\clock, [tempo:~buflength * (~loopdur / ~buflength)]);
+~masterLoopDur = nil;
+~setMasterLoopDur.value(4);
 ~buffers.size.do { |i|
 	// ~loops.put( i, Synth(\loop, [in:2, bufnum: ~buffers[i]])	);
 	var bufnum = ~buffers[i];
-	~loops.put( i, Synth(\bufrd, [in:2, bufnum: bufnum, dur: ~loopdur, clock:~tempo]));
+	~loops.put( i, Synth(\bufrd, [in:2, bufnum: bufnum, clock:~tempo]));
 	[i, bufnum].postln;
 };
 
@@ -65,7 +65,7 @@ s.freeAll;
 	~loops[loopnum].set(\rec, (value-1).abs);
 };
 
-// max duration of the loops
+
 ~setTempo = { |tempo|
 	~tempo = tempo;
 	~loops.do { |loop|
@@ -75,7 +75,11 @@ s.freeAll;
 	}
 };
 
-~setMaxLoopDur = { |seconds| ~setTempo.value(1/seconds)};
+// max duration of the loops
+~setMaxLoopDur = { |seconds|
+	~masterLoopDur = seconds;
+	~setTempo.value(1/seconds)
+};
 
 // un-normalize parameters
 ~paramsMap = (
