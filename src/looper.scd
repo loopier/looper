@@ -67,20 +67,6 @@ s.freeAll;
 	~loops[loopnum].set(\rec, (value-1).abs);
 };
 
-
-~setTempo = { |tempo|
-	var scale = tempo / ~tempo;
-	scale.postln;
-	~tempo = tempo;
-	~loops.do { |loop|
-		loop.set(\clock, ~tempo);
-		// rescale parameters
-		loop.get(\dur, { |dur| loop.set(\dur, dur) });
-		// remove rate scaling if you only want to change speed without changing pitch
-		loop.get(\rate, { |rate| loop.set(\rate, rate * scale) });
-	}
-};
-
 // max duration of the loops
 ~isStretched = false; // used by controls
 ~setMaxLoopDur = { |seconds, stretch|
