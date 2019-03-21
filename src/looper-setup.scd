@@ -33,8 +33,9 @@ s.waitForBoot {
 		var out = \out.kr(0);
 		var pan = \pan.kr(0);
 		var amp = \amp.kr(1);
-		var syncbus = \syncbus.kr(2);
-		var sync = \sync.kr(1);
+		// var syncbus = \syncbus.kr(2);
+		// var sync = \sync.kr(1);
+		var clock = \clock.kr(TempoClock.default.tempo);
 
 		var bufnum = \bufnum.kr(0);
 		var rate = \rate.kr(1);
@@ -50,7 +51,7 @@ s.waitForBoot {
 		var feedback = \feedback.kr(1);
 
 		var sig, sigrec, pos, end, resetpos, synctrig;
-		synctrig = In.kr(syncbus);
+		// synctrig = In.kr(syncbus);
 		// dur = BufDur.kr(buf) * dur;
 		rate = BufRateScale.kr(bufnum) * rate;
 		resetpos = BufFrames.kr(bufnum) * start;
@@ -58,8 +59,8 @@ s.waitForBoot {
 		end = BufFrames.kr(bufnum) * min((start + dur), 1);
 		// phase = BufFrames.kr(buf) * phase;
 		pos = Phasor.ar(
-			// trig: Impulse.kr(1/dur, phase) + t_reset + Select.kr(sync, [0, synctrig]),
-			trig: synctrig+ t_reset,
+			trig: Impulse.kr(clock) + t_reset,
+			// trig: synctrig+ t_reset,
 			// trig: PulseDivider.kr(synctrig, dur) + t_reset,
 			rate: rate,
 			start: resetpos,

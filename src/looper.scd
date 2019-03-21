@@ -1,7 +1,7 @@
 "looper-setup.scd".loadRelative;
 (
 s.freeAll;
-~tempo = TempoClock(1);
+~tempo = TempoClock.default.tempo;
 ~buffers = ();
 ~buflength = 16.0; // seconds
 8.do {|i| ~buffers.put(i, Buffer.alloc(s, ~buflength * s.sampleRate)); };
@@ -9,12 +9,12 @@ s.freeAll;
 (
 ~loops = ();
 ~loops.collect(_.free);
-~loopdur = 4;
+~masterdur = ~tempo;
 ~clock = Synth(\clock, [tempo:~buflength * (~loopdur / ~buflength)]);
 ~buffers.size.do { |i|
 	// ~loops.put( i, Synth(\loop, [in:2, bufnum: ~buffers[i]])	);
 	var bufnum = ~buffers[i];
-	~loops.put( i, Synth(\bufrd, [in:2, bufnum: bufnum, dur: ~loopdur]));
+	~loops.put( i, Synth(\bufrd, [in:2, bufnum: bufnum, dur: ~loopdur, clock:~tempo]));
 	[i, bufnum].postln;
 };
 
@@ -65,12 +65,24 @@ s.freeAll;
 	~loops[loopnum].set(\rec, (value-1).abs);
 };
 
+// max duration of the loops
+~setTempo = { |tempo|
+	~tempo = tempo;
+	~loops.do { |loop|
+		loop.set(\clock, ~tempo);
+		// rescale dur
+		loop.get(\dur, { |dur| loop.set(\dur, dur) });
+	}
+};
+
+~setMaxLoopDur = { |seconds| ~setTempo.value(1/seconds)};
+
 // un-normalize parameters
 ~paramsMap = (
 	\rate: { | value | value.linlin(0.0, 1.0, -4.0, 4.0).asStringPrec(2).asFloat},
 	\start: { | value | value},
 	// \dur: { | value | value.linlin(0.0, 1.0, 0, 1024).asInt / 256},
-	\dur: { | value | value},
+	\dur: { | value | value.asStringPrec(2).asFloat},
 	\amp: { | value | value.linexp(0.0, 1.0, 0.001, 1.0) - 0.001},
 	\feedback: { | value | value.linlin(0.0, 1.0, 0.0, 1.27)},
 	\rec: { | value | value},
