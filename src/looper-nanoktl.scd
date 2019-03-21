@@ -17,7 +17,6 @@
 			var ktlname = (ktl++index).asSymbol;
 			var param = ~nanoktlparams[ktl].asArray[scene-1];
 			if (param != nil) {
-				// ["ktl: "++ktl, "sc: "++scene, "ktlname: "++ktlname, "param: "++param].postln;
 				[ktlname, param].postln;
 				~ktl.mapCCS( scene, ktlname, { |val| ~set.value(i, param, val.linlin(0, 127, 0.0, 1.0)); });
 			};

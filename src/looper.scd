@@ -22,11 +22,11 @@ s.freeAll;
 ~clearBuffer = {|loopnum| ~buffers[loopnum].zero;};
 
 ~reset = {|loopnum|
-	~tempo.schedAbs( ~tempo.beats.ceil, {
+	// ~tempo.schedAbs( ~tempo.nextBeat, {
 		["reset: "++loopnum].postln;
 
 		// ~loops[loopnum].set(\t_reset, 1);
-		~loops[loopnum].set(\amp, 1);
+		~loops[loopnum].set(\amp, 0.5);
 		~loops[loopnum].set(\out, 0);
 		~loops[loopnum].set(\pan, 0);
 		~loops[loopnum].set(\feedback, 1);
@@ -37,30 +37,44 @@ s.freeAll;
 		~loops[loopnum].set(\rec, 0);
 		// ~loops[loopnum].set(\loop, 0);
 		// ~clearBuffer.value(loopnum);
-		~sync.value(loopnum);
-	});
+		// ~sync.value(loopnum);
+// });
 };
 
-~erase = {|loopnum, value|
-	// TODO: it would be nice to get the actual parameters of amp, reclevel and feedback to restore them after erasing
+~valuesBuffer = (
+	\amp: 0,
+	\reclevel: 0,
+	\feedback: 0,
+);
 
+~erase = {|loopnum, value|
+	~valuesBuffer.keys.do { |param|
+		~loops[loopnum].get(param, { |old|
+			var paramvalue;
+			if (value > 0) {
+				paramvalue = 0;
+				~valuesBuffer[param] = old;
+			} {
+				paramvalue = ~valuesBuffer[param];
+			};
+			~loops[loopnum].set(param, paramvalue);
+			["erasing: "++(value.asBoolean), "\\"++param, "old: "++old, "val: "++paramvalue].postln;
+		});
+	};
 	// recording needs to be on when erasing, so value needs to be inverted
 	~loops[loopnum].set(\rec, (value-1).abs);
-	~loops[loopnum].set(\amp, value);
-	~loops[loopnum].set(\reclevel, value);
-	~loops[loopnum].set(\feedback, value);
 };
 
 // un-normalize parameters
 ~paramsMap = (
-	\rate: { | value | value.linlin(0.0, 1.0, -4.0, 4.0)},
+	\rate: { | value | value.linlin(0.0, 1.0, -4.0, 4.0).asStringPrec(2).asFloat},
 	\start: { | value | value},
 	// \dur: { | value | value.linlin(0.0, 1.0, 0, 1024).asInt / 256},
 	\dur: { | value | value},
 	\amp: { | value | value.linexp(0.0, 1.0, 0.001, 1.0) - 0.001},
 	\feedback: { | value | value.linlin(0.0, 1.0, 0.0, 1.27)},
 	\rec: { | value | value},
-	\erase: { | value | (value-1).abs}, // 0=1, 1=0
+	\erase: { | value | value}, // 0=1, 1=0
 	\clearBuf: { | value | value},
 	\t_reset: { | value | value},
 	\reset: { | value | value},
