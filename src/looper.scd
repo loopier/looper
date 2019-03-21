@@ -19,7 +19,8 @@ s.freeAll;
 };
 
 ~sync = {|loopnum| ~tempo.playNextBar(~loops[loopnum].set(\t_reset, 1));};
-~clearBuffer = {|loopnum| ~buffers[loopnum].zero;};
+~clearBuffer = {|loopnum| ~buffers[loopnum].zero; ["clear: "++loopnum].postln;};
+~clearAll = {|loopnum| ~buffers.do { |buf| buf.zero;}; ["clear all"].postln;};
 
 ~reset = {|loopnum|
 	// ~tempo.schedAbs( ~tempo.nextBeat, {
@@ -40,6 +41,7 @@ s.freeAll;
 		// ~sync.value(loopnum);
 // });
 };
+~resetAll = {|loopnum| ~loops.size.do { |loopnum| ~reset.value(loopnum);}; };
 
 ~valuesBuffer = (
 	\amp: 0,
@@ -80,9 +82,20 @@ s.freeAll;
 };
 
 // max duration of the loops
-~setMaxLoopDur = { |seconds|
+~isStretched = false; // used by controls
+~setMaxLoopDur = { |seconds, stretch|
+	if (stretch == nil) {stretch = ~isStretched};
+	["seconds: "++seconds, "stretch: "++stretch].postln;
 	~masterLoopDur = seconds;
-	~setTempo.value(1/seconds)
+	// ~setTempo.value(1/seconds)
+
+	~tempo = 1/seconds;
+	~loops.do { |loop|
+		loop.set(\clock, ~tempo);
+		// rescale parameters
+		loop.get(\dur, { |dur| loop.set(\dur, dur); });
+		if (stretch) { loop.get(\rate, { |rate| loop.set(\rate, rate * seconds) });};
+	}
 };
 
 // un-normalize parameters
@@ -99,6 +112,7 @@ s.freeAll;
 	\t_reset: { | value | value},
 	\reset: { | value | value},
 	\sync: { | value | value},
+	\maxdur: { | value | value},
 );
 
 // Input values must be normalized
