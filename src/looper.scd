@@ -1,18 +1,8 @@
-/*"looper-setup.scd".loadRelative;
-(
-s.freeAll;
-~tempo = TempoClock.default.tempo;
-~buffers = ();
-~buflength = 16.0; // seconds
-8.do {|i| ~buffers.put(i, Buffer.alloc(s, ~buflength * s.sampleRate)); };
-)
-(*/
 ~loops = ();
 ~loops.collect(_.free);
 ~masterLoopDur = nil;
 ~setMasterLoopDur.value(4);
 ~buffers.size.do { |i|
-	// ~loops.put( i, Synth(\loop, [in:2, bufnum: ~buffers[i]])	);
 	var bufnum = ~buffers[i];
 	~loops.put( i, Synth(\bufrd, [in:2, bufnum: bufnum, clock:~tempo]));
 	[i, bufnum].postln;
@@ -23,10 +13,8 @@ s.freeAll;
 ~clearAll = {|loopnum| ~buffers.do { |buf| buf.zero;}; ["clear all"].postln;};
 
 ~reset = {|loopnum|
-	// ~tempo.schedAbs( ~tempo.nextBeat, {
 	["reset: "++loopnum].postln;
 
-	// ~loops[loopnum].set(\t_reset, 1);
 	~loops[loopnum].set(\amp, 0.25);
 	~loops[loopnum].set(\out, 0);
 	~loops[loopnum].set(\pan, 0);
@@ -36,10 +24,6 @@ s.freeAll;
 	~loops[loopnum].set(\dur, 1);
 	~loops[loopnum].set(\start, 0);
 	~loops[loopnum].set(\rec, 0);
-	// ~loops[loopnum].set(\loop, 0);
-	// ~clearBuffer.value(loopnum);
-	// ~sync.value(loopnum);
-	// });
 };
 ~resetAll = {|loopnum| ~loops.size.do { |loopnum| ~reset.value(loopnum);}; };
 
@@ -71,33 +55,40 @@ s.freeAll;
 
 // max duration of the loops
 ~isStretched = false; // used by controls
+// register loops to be resized when resizing master loop duration
+~resizeLoops = Array.fill(~loops.size, false);
+// param seconds INT     Duration time in seconds
+// param stretch   BOOL  Stretch loops (changing rate)
 ~setMaxLoopDur = { |seconds, stretch|
 	var rateRatio;
-	seconds = max(seconds, 0.001);
-	rateRatio = seconds / if(~masterLoopDur != nil, ~masterLoopDur, seconds);
-	// rateRatio.postln;
+	seconds = max(seconds, 0.01);
 	if (stretch == nil) {stretch = ~isStretched};
-	["seconds: "++seconds, "stretch: "++stretch].postln;
+	// ~masterLoopDur = if(~masterLoopDur != nil, ~masterLoopDur, seconds);
+
+	rateRatio = seconds / if(~masterLoopDur != nil, ~masterLoopDur, seconds);
+
 	~masterLoopDur = seconds;
-	// ~setTempo.value(1/seconds)
 
 	~tempo = 1/seconds;
 	~loops.do { |loop|
-		loop.set(\clock, ~tempo);
+		// loop.set(\clock, ~tempo);
+		~resizeLoops.do { |resize, index|
+			[resize, index].postln;
+			if (resize) {~loops[index].set(\clock, ~tempo);}
+		};
 		// rescale parameters
-		loop.get(\dur, { |dur| loop.set(\dur, dur); });
+		loop.get(\dur, { |dur| loop.set(\dur, dur);});
 		// FIX: Stretch scaling is not very precise
 		if (stretch) { loop.get(\rate, { |rate| loop.set(\rate, (rate / rateRatio)); rate.asStringPrec(2).postln;}) };
-	}
+	};
 
-	// ["seconds: "++seconds, "dur: "++~masterLoopDur, "ratio: "++rateRatio].postln;
+	["seconds: "++seconds, "masterdur: "++~masterLoopDur].postln;
 };
 
 // un-normalize parameters
 ~paramsMap = (
 	\rate: { | value | value.linlin(0.0, 1.0, -4.0, 4.0).asStringPrec(2).asFloat},
 	\start: { | value | value},
-	// \dur: { | value | value.linlin(0.0, 1.0, 0, 1024).asInt / 256},
 	\dur: { | value | value.linlin(0.0, 1.0 * ~masterLoopDur, 0.001, 1.0).asStringPrec(2).asFloat},
 	\amp: { | value | value.linexp(0.0, 1.0, 0.001, 1.0) - 0.001},
 	\feedback: { | value | value.linlin(0.0, 1.0, 0.0, 1.27)},
@@ -109,6 +100,7 @@ s.freeAll;
 	\sync: { | value | value},
 	\maxdur: { | value | value},
 	\metro: { | value | (value > 0)},
+	\resize: { | value | (value > 0)},
 );
 
 // Input values must be normalized
@@ -116,6 +108,7 @@ s.freeAll;
 	value = ~paramsMap[param].value(value);
 
 	switch (param,
+		{\resize}, {~resizeLoops[loopnum] = value; ~resizeLoops.postln},
 		{\clearBuf}, {~clearBuffer.value(loopnum)},
 		{\reset}, {~reset.value(loopnum)},
 		{\erase}, {~erase.value(loopnum, value)},
@@ -126,6 +119,4 @@ s.freeAll;
 };
 
 ~sndInput = Synth(\mic, [out:2]);
-// "looper-nanoktl.scd".loadRelative;
-// )
 

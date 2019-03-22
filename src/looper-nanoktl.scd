@@ -13,9 +13,9 @@
 	// \stop: '0_46',
 	// \rec: '0_44',
 
-	\kn: [ \rate,  \dur, nil],
+	\kn: [ \rate,  \dur, nil, nil],
 	\sl: [ \amp,  \start, \feedback, nil],
-	\bu: [ \rec,  \reset, \metro, nil],
+	\bu: [ \rec,  \reset, \metro, \resize],
 	\bd: [ \erase, \clearBuf,  nil],
 );
 4.do { |scene|
@@ -35,9 +35,10 @@
 };
 
 // set max buffer dur
-~ktl.mapCCS( 1, \kn9, { |val| ~setMaxLoopDur.value(val.linlin(0, 127, 0.0, 16.0).asStringPrec(2).asFloat); });
+~ktl.mapCCS(4, \kn9, { |val| ~setMaxLoopDur.value(val.linlin(0, 127, 0.0, 16.0).asStringPrec(2).asFloat)});
 // stretch
-~ktl.mapCCS( 1, \sl9, { |val| ~setMaxLoopDur.value(val.linlin(0, 127, 0.0, 16.0).asStringPrec(2).asFloat, true); });
+// ~ktl.mapCCS( 1, \sl9, { |val| ~setMaxLoopDur.value(val.linlin(0, 127, 0.0, 16.0).asStringPrec(2).asFloat, true); });
 ~ktl.mapCCS( 1, \bu9, { |val| ~isStretched = val.asBoolean; });
+~ktl.mapCCS( 1, \bd9, { |val| ~isStretched = val.asBoolean; });
 ~ktl.mapCCS(0, \rec, ~clearAll);
 ~ktl.mapCCS(0, \loop, ~resetAll);
