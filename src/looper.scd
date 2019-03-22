@@ -53,8 +53,8 @@
 
 ~toggleMetro = {|loopnum, value| ~loops[loopnum].set(\metro, (value > 0))};
 
-// max duration of the loops
-~isStretched = false; // used by controls
+// register loops to be stretched when resizing master loop duration
+~stretchLoops = Array.fill(~loops.size, false);
 // register loops to be resized when resizing master loop duration
 ~resizeLoops = Array.fill(~loops.size, false);
 // param seconds INT     Duration time in seconds
@@ -73,13 +73,19 @@
 	~loops.do { |loop|
 		// loop.set(\clock, ~tempo);
 		~resizeLoops.do { |resize, index|
-			[resize, index].postln;
 			if (resize) {~loops[index].set(\clock, ~tempo);}
 		};
 		// rescale parameters
 		loop.get(\dur, { |dur| loop.set(\dur, dur);});
 		// FIX: Stretch scaling is not very precise
-		if (stretch) { loop.get(\rate, { |rate| loop.set(\rate, (rate / rateRatio)); rate.asStringPrec(2).postln;}) };
+		~stretchLoops.do { |stretch, index|
+			if (stretch) {
+				~loops[index].get(\rate, { |rate|
+					loop.set(\rate, (rate / rateRatio));
+					rate.asStringPrec(2).postln;
+				})
+			};
+		};
 	};
 
 	["seconds: "++seconds, "masterdur: "++~masterLoopDur].postln;
@@ -101,6 +107,7 @@
 	\maxdur: { | value | value},
 	\metro: { | value | (value > 0)},
 	\resize: { | value | (value > 0)},
+	\stretch: { | value | (value > 0)},
 );
 
 // Input values must be normalized
@@ -108,7 +115,8 @@
 	value = ~paramsMap[param].value(value);
 
 	switch (param,
-		{\resize}, {~resizeLoops[loopnum] = value; ~resizeLoops.postln},
+		{\stretch}, {~stretchLoops[loopnum] = value},
+		{\resize}, {~resizeLoops[loopnum] = value},
 		{\clearBuf}, {~clearBuffer.value(loopnum)},
 		{\reset}, {~reset.value(loopnum)},
 		{\erase}, {~erase.value(loopnum, value)},
