@@ -15,8 +15,8 @@
 
 	\kn: [ \rate,  \dur, nil],
 	\sl: [ \amp,  \start, \feedback, nil],
-	\bu: [ \rec,  \t_reset,  \reset, \metro],
-	\bd: [ \erase, \sync,  \clearBuf,  nil],
+	\bu: [ \rec,  \reset, \metro, nil],
+	\bd: [ \erase, \clearBuf,  nil],
 );
 4.do { |scene|
 	scene = scene + 1;
