@@ -63,32 +63,33 @@
 	var rateRatio;
 	seconds = max(seconds, 0.01);
 	if (stretch == nil) {stretch = ~isStretched};
-	// ~masterLoopDur = if(~masterLoopDur != nil, ~masterLoopDur, seconds);
 
 	rateRatio = seconds / if(~masterLoopDur != nil, ~masterLoopDur, seconds);
 
 	~masterLoopDur = seconds;
 
 	~tempo = 1/seconds;
-	~loops.do { |loop|
-		// loop.set(\clock, ~tempo);
-		~resizeLoops.do { |resize, index|
-			if (resize) {~loops[index].set(\clock, ~tempo);}
-		};
+	~loops.do { |loop, index|
 		// rescale parameters
 		loop.get(\dur, { |dur| loop.set(\dur, dur);});
+
+
+		if (~resizeLoops[index]) {
+			// FIX: loop.set(...) doesn't work (?)
+			~loops[index].set(\clock, ~tempo);
+		};
 		// FIX: Stretch scaling is not very precise
-		~stretchLoops.do { |stretch, index|
-			if (stretch) {
-				~loops[index].get(\rate, { |rate|
-					loop.set(\rate, (rate / rateRatio));
-					rate.asStringPrec(2).postln;
-				})
-			};
+		if (~stretchLoops[index]) {// FIX: loop.set(...) doesn't work (?)
+			~loops[index].get(\rate, { |rate|
+			~loops[index].set(\clock, ~tempo);
+				// FIX: loop.set(...) doesn't work (?)
+				~loops[index].set(\rate, (rate / rateRatio));
+				// [index, rate.asStringPrec(2)].postln;
+			})
 		};
 	};
 
-	["seconds: "++seconds, "masterdur: "++~masterLoopDur].postln;
+	["seconds: "++seconds, "masterdur: "++~masterLoopDur, "tempo: "++~tempo.asStringPrec(2)].postln;
 };
 
 // un-normalize parameters
@@ -109,7 +110,6 @@
 	\resize: { | value | (value > 0)},
 	\stretch: { | value | (value > 0)},
 );
-
 // Input values must be normalized
 ~set = {|loopnum, param, value|
 	value = ~paramsMap[param].value(value);
