@@ -20,7 +20,7 @@ SynthDef(\bufrd, {
 	var metro = \metro.kr(0);
 	var metroBeatsPerBar = \metroBeatsPerBar.kr(4);
 
-	var clocktrig, sig, metrosig, pos, end, resetpos;
+	var clocktrig, sig, bufsig, recsig, metrosig, pos, end, resetpos;
 
 	clocktrig = Impulse.kr(clock) + t_reset;
 	rate = BufRateScale.kr(bufnum) * rate;
@@ -35,9 +35,10 @@ SynthDef(\bufrd, {
 	);
 
 	sig = BufRd.ar(1, bufnum, pos, loop);
+	recsig = (in * rec * (reclevel/2)) + (sig * feedback);
 	metrosig = Decay.kr([clocktrig, PulseDivider.kr(Impulse.kr(clock*metroBeatsPerBar), metroBeatsPerBar)], 0.1) * SinOsc.ar([660, 880], 0, 0.1) * metro;
 
-	BufWr.ar((in * rec * (reclevel/2)) + (sig * feedback), bufnum, pos, loop);
+	BufWr.ar( Select.ar(rec, [sig, recsig]), bufnum, pos, loop);
 
 	sig = (sig * amp) + metrosig;
 

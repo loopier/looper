@@ -1,7 +1,7 @@
 ~loops = ();
 ~loops.collect(_.free);
 ~masterLoopDur = nil;
-~setMasterLoopDur.value(4);
+~setMasterLoopDur.value(1);
 ~buffers.size.do { |i|
 	var bufnum = ~buffers[i];
 	~loops.put( i, Synth(\bufrd, [in:2, bufnum: bufnum, clock:~tempo]));
