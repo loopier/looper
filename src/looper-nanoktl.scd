@@ -39,5 +39,5 @@
 ~ktl.mapCCS(4, \bu9, { |val| ~resizeLoops = Array.fill(~loops.size, val);});
 ~ktl.mapCCS(4, \bd9, { |val| ~stretchLoops = Array.fill(~loops.size, val);});
 
-~ktl.mapCCS(0, \rec, ~clearAll);
+~ktl.mapCCS(0, \rew, ~clearAll);
 ~ktl.mapCCS(0, \loop, ~resetAll);
