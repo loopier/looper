@@ -1,7 +1,7 @@
 SynthDef(\bufrd, {
 	var out = \out.kr(0);
 	var pan = \pan.kr(0);
-	var amp = \amp.kr(1);
+	var amp = \amp.kr(0.25);
 	var clock = \clock.kr(TempoClock.default.tempo);
 
 	var bufnum = \bufnum.kr(0);

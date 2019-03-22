@@ -1,4 +1,4 @@
-"looper-setup.scd".loadRelative;
+/*"looper-setup.scd".loadRelative;
 (
 s.freeAll;
 ~tempo = TempoClock.default.tempo;
@@ -6,7 +6,7 @@ s.freeAll;
 ~buflength = 16.0; // seconds
 8.do {|i| ~buffers.put(i, Buffer.alloc(s, ~buflength * s.sampleRate)); };
 )
-(
+(*/
 ~loops = ();
 ~loops.collect(_.free);
 ~masterLoopDur = nil;
@@ -27,7 +27,7 @@ s.freeAll;
 	["reset: "++loopnum].postln;
 
 	// ~loops[loopnum].set(\t_reset, 1);
-	~loops[loopnum].set(\amp, 0.5);
+	~loops[loopnum].set(\amp, 0.25);
 	~loops[loopnum].set(\out, 0);
 	~loops[loopnum].set(\pan, 0);
 	~loops[loopnum].set(\feedback, 1);
@@ -72,7 +72,9 @@ s.freeAll;
 // max duration of the loops
 ~isStretched = false; // used by controls
 ~setMaxLoopDur = { |seconds, stretch|
-	var rateRatio = seconds / if(~masterLoopDur != nil, ~masterLoopDur, seconds);
+	var rateRatio;
+	seconds = max(seconds, 0.001);
+	rateRatio = seconds / if(~masterLoopDur != nil, ~masterLoopDur, seconds);
 	// rateRatio.postln;
 	if (stretch == nil) {stretch = ~isStretched};
 	["seconds: "++seconds, "stretch: "++stretch].postln;
@@ -124,6 +126,6 @@ s.freeAll;
 };
 
 ~sndInput = Synth(\mic, [out:2]);
-"looper-nanoktl.scd".loadRelative;
-)
+// "looper-nanoktl.scd".loadRelative;
+// )
 
