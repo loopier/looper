@@ -24,22 +24,22 @@ s.freeAll;
 
 ~reset = {|loopnum|
 	// ~tempo.schedAbs( ~tempo.nextBeat, {
-		["reset: "++loopnum].postln;
+	["reset: "++loopnum].postln;
 
-		// ~loops[loopnum].set(\t_reset, 1);
-		~loops[loopnum].set(\amp, 0.5);
-		~loops[loopnum].set(\out, 0);
-		~loops[loopnum].set(\pan, 0);
-		~loops[loopnum].set(\feedback, 1);
-		~loops[loopnum].set(\reclevel, 1);
-		~loops[loopnum].set(\rate, 1);
-		~loops[loopnum].set(\dur, 1);
-		~loops[loopnum].set(\start, 0);
-		~loops[loopnum].set(\rec, 0);
-		// ~loops[loopnum].set(\loop, 0);
-		// ~clearBuffer.value(loopnum);
-		// ~sync.value(loopnum);
-// });
+	// ~loops[loopnum].set(\t_reset, 1);
+	~loops[loopnum].set(\amp, 0.5);
+	~loops[loopnum].set(\out, 0);
+	~loops[loopnum].set(\pan, 0);
+	~loops[loopnum].set(\feedback, 1);
+	~loops[loopnum].set(\reclevel, 1);
+	~loops[loopnum].set(\rate, 1);
+	~loops[loopnum].set(\dur, 1);
+	~loops[loopnum].set(\start, 0);
+	~loops[loopnum].set(\rec, 0);
+	// ~loops[loopnum].set(\loop, 0);
+	// ~clearBuffer.value(loopnum);
+	// ~sync.value(loopnum);
+	// });
 };
 ~resetAll = {|loopnum| ~loops.size.do { |loopnum| ~reset.value(loopnum);}; };
 
@@ -67,9 +67,13 @@ s.freeAll;
 	~loops[loopnum].set(\rec, (value-1).abs);
 };
 
+~toggleMetro = {|loopnum, value| ~loops[loopnum].set(\metro, (value > 0))};
+
 // max duration of the loops
 ~isStretched = false; // used by controls
 ~setMaxLoopDur = { |seconds, stretch|
+	var rateRatio = seconds / if(~masterLoopDur != nil, ~masterLoopDur, seconds);
+	// rateRatio.postln;
 	if (stretch == nil) {stretch = ~isStretched};
 	["seconds: "++seconds, "stretch: "++stretch].postln;
 	~masterLoopDur = seconds;
@@ -80,8 +84,11 @@ s.freeAll;
 		loop.set(\clock, ~tempo);
 		// rescale parameters
 		loop.get(\dur, { |dur| loop.set(\dur, dur); });
-		if (stretch) { loop.get(\rate, { |rate| loop.set(\rate, rate * seconds) });};
+		// FIX: Stretch scaling is not very precise
+		if (stretch) { loop.get(\rate, { |rate| loop.set(\rate, (rate / rateRatio)); rate.asStringPrec(2).postln;}) };
 	}
+
+	// ["seconds: "++seconds, "dur: "++~masterLoopDur, "ratio: "++rateRatio].postln;
 };
 
 // un-normalize parameters
@@ -89,7 +96,7 @@ s.freeAll;
 	\rate: { | value | value.linlin(0.0, 1.0, -4.0, 4.0).asStringPrec(2).asFloat},
 	\start: { | value | value},
 	// \dur: { | value | value.linlin(0.0, 1.0, 0, 1024).asInt / 256},
-	\dur: { | value | value.asStringPrec(2).asFloat},
+	\dur: { | value | value.linlin(0.0, 1.0 * ~masterLoopDur, 0.001, 1.0).asStringPrec(2).asFloat},
 	\amp: { | value | value.linexp(0.0, 1.0, 0.001, 1.0) - 0.001},
 	\feedback: { | value | value.linlin(0.0, 1.0, 0.0, 1.27)},
 	\rec: { | value | value},
@@ -99,6 +106,7 @@ s.freeAll;
 	\reset: { | value | value},
 	\sync: { | value | value},
 	\maxdur: { | value | value},
+	\metro: { | value | (value > 0)},
 );
 
 // Input values must be normalized
@@ -106,7 +114,6 @@ s.freeAll;
 	value = ~paramsMap[param].value(value);
 
 	switch (param,
-		{\sync}, {~sync.value(loopnum)},
 		{\clearBuf}, {~clearBuffer.value(loopnum)},
 		{\reset}, {~reset.value(loopnum)},
 		{\erase}, {~erase.value(loopnum, value)},
