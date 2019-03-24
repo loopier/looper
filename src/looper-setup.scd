@@ -3,6 +3,7 @@ s.options.memSize = s.options.memSize * 2;
 s.boot.meter;
 s.meter;
 s.scope(2).style_(2).window.bounds_(Rect(0,1024, 400,400));
+s.makeWindow;
 
 s.waitForBoot {
 	"looper-synthdefs.scd".loadRelative;
