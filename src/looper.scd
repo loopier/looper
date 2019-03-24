@@ -1,3 +1,7 @@
+// TODO: Refurbish
+// - Use toggles for active/inactive loops (lock?)
+// - Active loops may be modified by controls, inactive will not be modified
+
 ~loops = ();
 ~loops.collect(_.free);
 ~masterLoopDur = nil;
